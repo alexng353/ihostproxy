@@ -1,0 +1,7 @@
+bin/
+.git/
+Dockerfile
+Dockerfile.armv6
+README.md
+nodemon.json
+*.db

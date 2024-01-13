@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"strconv"
 
 	"github.com/a-h/templ"
 	"github.com/alexng353/ihostproxy/views"
@@ -15,25 +16,20 @@ type GlobalState struct {
 
 var global GlobalState
 
-func getHandler(c *fiber.Ctx) error {
-	// component := views.Page()
-
-	handler := adaptor.HTTPHandler(templ.Handler(views.Page()))
-
-	return handler(c)
+func templAdapter(component templ.Component) func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		handler := adaptor.HTTPHandler(templ.Handler(component))
+		return handler(c)
+	}
 }
 
 func startWebUI(ctx Env) {
-	WebUIPort := ctx.WebUIPort
+	port := strconv.FormatInt(int64(validatePort(ctx.WebUIPort, 8080)), 10)
 
 	app := fiber.New()
 
-	app.Get("/", getHandler)
+	app.Get("/", templAdapter(views.Page()))
 
-	app.Get("/goodbye", func(c *fiber.Ctx) error {
-		return c.SendString("Goodbye, World!")
-	})
-
-	slog.Info("Starting web ui on port " + WebUIPort)
-	app.Listen(":8080")
+	slog.Info("Starting WebUI", "port", port)
+	app.Listen(":" + port)
 }

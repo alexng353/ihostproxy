@@ -4,14 +4,12 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"regexp"
 	"strconv"
 
 	"github.com/things-go/go-socks5"
 )
 
 func startProxy(ctx Env) {
-
 	var credentials = NewSQLiteCredentialStore()
 	if ctx.Creds != "" {
 		err := credentials.Load(ctx.Creds)
@@ -35,27 +33,8 @@ func startProxy(ctx Env) {
 
 	port := strconv.FormatInt(int64(validatePort(ctx.ProxyPort)), 10)
 
-	slog.Info("Starting server", "port", port)
+	slog.Info("Starting Socks5 Proxy", "port", port)
 	if err := server.ListenAndServe("tcp", ":"+port); err != nil {
 		panic(err)
 	}
-}
-
-func validatePort(port_str string) (port int) {
-	portRe := regexp.MustCompile(`^\d+$`)
-	if !portRe.MatchString(port_str) {
-		return 1080
-	}
-
-	// parse int and check if its in range
-	port, err := strconv.Atoi(port_str)
-	if err != nil {
-		return 1080
-	}
-
-	if port < 1 || port > 65535 {
-		return 1080
-	}
-
-	return port
 }
