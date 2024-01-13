@@ -1,0 +1,8 @@
+{
+  "verbose": true,
+  "watch": ["*.go", "*.templ"],
+  "ignore": ["*_templ.go"],
+  "ext": "go,templ",
+  "exec": "templ generate && go run *.go",
+  "signal": "SIGTERM"
+}
