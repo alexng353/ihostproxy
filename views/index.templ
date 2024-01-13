@@ -1,15 +1,34 @@
 package views 
 
 templ Page() {
+	<head>
+		<title>ihostproxy web ui</title>
+		<link rel="stylesheet" href="/static/index.css"/>
+		<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+	</head>
 	<div>
-		<h1>Hello, world!</h1>
-		<h2>POGGERS</h2>
+		<h1>ihostproxy web ui</h1>
 		@Auth()
 	</div>
 }
 
 templ Auth() {
 	<div>
-		<h1>Auth</h1>
+		<form hx-post="/login" hx-target="#success-indicator">
+			<input
+				type="text"
+				name="username"
+				placeholder="username"
+				hx-sync="closest form:abort"
+			/>
+			<input
+				type="password"
+				name="password"
+				placeholder="password"
+				hx-sync="closest form:abort"
+			/>
+			<input type="submit" value="login"/>
+		</form>
+		<div id="success-indicator"></div>
 	</div>
 }

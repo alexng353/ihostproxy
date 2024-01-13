@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/caarlos0/env/v10"
+	"github.com/knvi/pika"
 )
 
 type Env struct {
@@ -19,6 +20,19 @@ type Env struct {
 	WebUIUser string `env:"WEBUI_USER" envDefault:""`
 	WebUIPass string `env:"WEBUI_PASS" envDefault:""`
 }
+
+var prefixes = []pika.PikaPrefixDefinition{
+	{
+		Prefix:      "user",
+		Description: "User prefix",
+		Secure:      false,
+	},
+}
+
+var P = pika.NewPika(prefixes, pika.PikaInitOptions{
+	NodeID:           622,
+	DisableLowercase: true,
+})
 
 func main() {
 	ctx := Env{}

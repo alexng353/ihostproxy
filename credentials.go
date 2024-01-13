@@ -7,7 +7,7 @@ import (
 	"log/slog"
 
 	_ "github.com/mattn/go-sqlite3"
-	// "github.com/things-go/go-socks5"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SQLiteCredentialStore struct {
@@ -49,7 +49,9 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 		log.Fatal(err)
 	}
 
-	query := "CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT); CREATE UNIQUE INDEX IF NOT EXISTS idx_username ON users (username)"
+	query := `CREATE TABLE IF NOT EXISTS users (id TEXT, username TEXT, password TEXT);
+						CREATE UNIQUE INDEX IF NOT EXISTS idx_username ON users (username);
+						CREATE UNIQUE INDEX IF NOT EXISTS idx_id ON users (id);`
 	_, err = db.Exec(query)
 
 	if err != nil {
@@ -61,19 +63,27 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 }
 
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
-	var exists bool
-	query := "SELECT EXISTS(SELECT 1 FROM users WHERE username=? AND password=?)"
-	err := store.db.QueryRow(query, user, password).Scan(&exists)
+	var hash []byte
+	query := "SELECT id, password FROM users WHERE username=?"
+	err := store.db.QueryRow(query, user).Scan(&user, &hash)
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Failed to compare password", "username", user, "error", err)
 		return false
 	}
-	return exists
+
+	return true
 }
 
 func (store *SQLiteCredentialStore) AddEntry(user, password string) (err error) {
-	query := "INSERT INTO users(username, password) VALUES(?, ?)"
-	_, err = store.db.Exec(query, user, password)
+	hash, err := hashPw(password)
+
+	uid := P.Gen("user")
+
+	query := "INSERT INTO users(id, username, password) VALUES(?, ?, ?)"
+	_, err = store.db.Exec(query, uid, user, hash)
 
 	if err != nil {
 		slog.Error("Failed to add entry", "username", user, "error", err)
@@ -84,9 +94,9 @@ func (store *SQLiteCredentialStore) AddEntry(user, password string) (err error) 
 	return nil
 }
 
-func (store *SQLiteCredentialStore) RemoveEntry(user, password string) (err error) {
-	query := "DELETE FROM users WHERE username=? AND password=?"
-	_, err = store.db.Exec(query, user, password)
+func (store *SQLiteCredentialStore) RemoveEntry(user string) (err error) {
+	query := "DELETE FROM users WHERE username=?"
+	_, err = store.db.Exec(query, user)
 
 	if err != nil {
 		slog.Error("Failed to remove entry", "username", user, "error", err)
@@ -96,13 +106,31 @@ func (store *SQLiteCredentialStore) RemoveEntry(user, password string) (err erro
 	return nil
 }
 
-// func main() {
-// 	store := NewSQLiteCredentialStore("your_database_file.db")
-//
-// 	// Use the Valid method
-// 	if store.Valid("username", "password", "userAddress") {
-// 		fmt.Println("Credentials are valid")
-// 	} else {
-// 		fmt.Println("Invalid credentials")
-// 	}
-// }
+func (store *SQLiteCredentialStore) GetEntry(user, password string) (id string, err error) {
+	var hash []byte
+	query := "SELECT id, password FROM users WHERE username=?"
+	err = store.db.QueryRow(query, user).Scan(&id, &hash)
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		slog.Error("Failed to compare password", "username", user, "error", err)
+		return "", err
+	}
+
+	if err != nil {
+		slog.Error("Failed to get entry", "username", user, "error", err)
+		return "", err
+	}
+
+	return id, nil
+}
+
+func hashPw(password string) (hash string, err error) {
+	str_hash, hash_err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if hash_err != nil {
+		slog.Error("Failed to hash password", "error", err)
+		return "", hash_err
+	}
+
+	return string(str_hash), nil
+}
