@@ -2,6 +2,15 @@
 
 > A self-hosted SOCKS5 proxy with an extremely basic authentication webui
 
+## Todo
+
+Web UI
+[] Change password
+
+Proxy
+[] FQDN
+[] IP Whitelist
+
 ## Running
 
 ### Running with the default ports and a custom volume for saving the db data
