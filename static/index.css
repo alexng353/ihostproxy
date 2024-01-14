@@ -1,3 +1,7 @@
-h1 {
-  color: blue;
+.home-page {
+  margin-top: 4em;
+}
+
+.add-user-wrapper {
+  margin-top: 2em;
 }

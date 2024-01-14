@@ -6,11 +6,13 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/alexng353/ihostproxy/context"
 	"github.com/alexng353/ihostproxy/credentials"
+	"github.com/alexng353/ihostproxy/helpers"
 	"github.com/things-go/go-socks5"
 )
 
-func startProxy(ctx Env) {
+func startProxy(ctx context.Env) {
 	var c = credentials.Get()
 	if ctx.Creds != "" {
 		err := c.Load(ctx.Creds)
@@ -32,7 +34,7 @@ func startProxy(ctx Env) {
 		socks5.WithAuthMethods([]socks5.Authenticator{cator}),
 	)
 
-	port := strconv.FormatInt(int64(validatePort(ctx.ProxyPort)), 10)
+	port := strconv.FormatInt(int64(helpers.ValidatePort(ctx.ProxyPort)), 10)
 
 	slog.Info("Starting Socks5 Proxy", "port", port)
 	if err := server.ListenAndServe("tcp", ":"+port); err != nil {

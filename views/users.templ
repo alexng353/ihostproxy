@@ -5,47 +5,65 @@ import "github.com/alexng353/ihostproxy/credentials"
 
 templ Users() {
 	<head>
-		<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
+		@DefaultHead()
 		<link rel="stylesheet" href="/static/users.css"/>
 	</head>
-	<h1>Users</h1>
-	<a href="/">Back</a>
-	<div class="table-wrapper">
-		<table class="user-table" id="table-target">
-			<tr>
-				<th>Name</th>
-				<th>User ID</th>
-				<th>Actions</th>
-			</tr>
-		</table>
-	</div>
-	<div
-		hx-get="/api/getusers"
-		hx-trigger="load"
-		hx-target="#table-target"
-		hx-swap="beforeend"
-	></div>
-	<div
-		id="response-target"
-	></div>
+	<main
+		style="margin-top: 4em"
+		class="container"
+	>
+		<div class="page-content">
+			<h1 class="page-title">Users</h1>
+			<a href="/">Back</a>
+			<div class="table-wrapper">
+				<table class="user-table" id="table-target">
+					<tr>
+						<th>Name</th>
+						<th>User ID</th>
+						<th>Admin</th>
+						<th>Actions</th>
+					</tr>
+				</table>
+			</div>
+			<div
+				hx-get="/api/getusers"
+				hx-trigger="load"
+				hx-target="#table-target"
+				hx-swap="beforeend"
+			></div>
+			<div
+				id="response-target"
+			></div>
+		</div>
+	</main>
 }
 
-templ User(username string, id string) {
+templ User(username string, id string, isadmin bool) {
 	<tr class="user">
 		<td class="user-name">{ username } </td>
 		<td class="user-email">{ id } </td>
+		<td class="admin-checkbox">
+			{ fmt.Sprintf("%t", isadmin) }
+		</td>
 		<td class="user-actions">
 			<button
 				hx-post={ fmt.Sprintf("/api/deleteuser?id=%s", id) }
 				hx-target="#response-target"
 				hx-confirm={ fmt.Sprintf("Are you sure you want to delete %s?", username) }
-			>Delete</button>
+			>
+				Delete
+			</button>
+			<button
+				onclick="alert('Not implemented yet')"
+			>
+				Change Password
+			</button>
 		</td>
 	</tr>
 }
 
 templ UserList(users []*credentials.User) {
 	for _, user := range users {
-		@User(user.Username, user.Id)
+		@User(user.Username, user.Id, user.Admin)
 	}
 }

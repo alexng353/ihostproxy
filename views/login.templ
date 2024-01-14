@@ -1,0 +1,55 @@
+package views
+
+templ Login() {
+	<head>
+		<title>ihostproxy WebUI | Login</title>
+		@DefaultHead()
+		<link rel="stylesheet" href="/static/auth.css"/>
+	</head>
+	<div id="root-selector" class="auth-page">
+		<div class="auth-wrapper">
+			<div class="title-wrapper">
+				<h1 class="page-title text-center">ihostproxy WebUI</h1>
+				<h2 class="page-subtitle text-center">Log in</h2>
+			</div>
+			<div
+				id="success-target"
+			>
+				<form
+					class="form"
+					hx-post="/api/login"
+					hx-target="#success-target"
+				>
+					<input
+						class="username text-input"
+						type="text"
+						name="username"
+						placeholder="username"
+						hx-sync="closest form:abort"
+					/>
+					<input
+						class="password text-input"
+						type="password"
+						name="password"
+						placeholder="password"
+						hx-sync="closest form:abort"
+					/>
+					<input class="primary-button submit button-input" type="submit" value="login"/>
+				</form>
+			</div>
+		</div>
+	</div>
+}
+
+templ AuthRedirect(username string) {
+	<script defer>
+		setTimeout(() => { 
+			window.location.href = '/';
+		}, 1000)
+	</script>
+	<div>
+		<div>
+			<h1>Logged in as { username }</h1>
+		</div>
+	</div>
+}

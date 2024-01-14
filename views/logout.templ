@@ -1,0 +1,22 @@
+package views
+
+templ Logout() {
+	<head>
+		<title>ihostproxy WebUI | Logout</title>
+		@DefaultHead()
+		<link rel="stylesheet" href="/static/auth.css"/>
+	</head>
+	<body>
+		<main class="auth-page">
+			<div class="auth-wrapper">
+				<h1 class="page-title">Logout</h1>
+				<form
+					hx-post="/api/logout"
+					class="form"
+				>
+					<input class="submit primary-button" type="submit" value="Log out"/>
+				</form>
+			</div>
+		</main>
+	</body>
+}

@@ -3,30 +3,40 @@ package views
 templ Page() {
 	<head>
 		<title>ihostproxy web ui</title>
+		@DefaultHead()
 		<link rel="stylesheet" href="/static/index.css"/>
-		<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
 	</head>
-	<h1>ihostproxy web ui</h1>
-	<div id="auth-wrapper">
-		<div
-			hx-get="/api/auth"
-			hx-trigger="load"
-		></div>
-		@Auth()
-	</div>
-	<div id="success-indicator"></div>
-	<div>
-		<h2>Add user</h2>
-		@AddUser()
-	</div>
-	<div>
-		<h2>Manage Users</h2>
-		<a href="/users">Manage Users</a>
-	</div>
+	<main class="container home-page">
+		<div class="page-content">
+			<h1 class="page-title">ihostproxy web ui</h1>
+			<div id="auth-wrapper">
+				<div
+					class="page-subtitle"
+					hx-get="/api/auth"
+					hx-trigger="load"
+				></div>
+			</div>
+			<div id="success-indicator"></div>
+			<div>
+				<ul>
+					<li><a href="/users">Users</a></li>
+					<li><a href="/logout">Logout</a></li>
+				</ul>
+			</div>
+			<div class="add-user-wrapper">
+				<h2 class="page-subtitle">Add user</h2>
+				@AddUser()
+			</div>
+		</div>
+	</main>
 }
 
 templ AddUser() {
-	<form hx-post="/api/adduser" hx-target="#adduser-indicator">
+	<form
+		class="form"
+		hx-post="/api/adduser"
+		hx-target="#adduser-indicator"
+	>
 		<input
 			type="text"
 			name="username"
@@ -42,24 +52,4 @@ templ AddUser() {
 		<input type="submit" value="add user"/>
 	</form>
 	<div id="adduser-indicator"></div>
-}
-
-templ Auth() {
-	<div>
-		<form hx-post="/login" hx-target="#success-indicator">
-			<input
-				type="text"
-				name="username"
-				placeholder="username"
-				hx-sync="closest form:abort"
-			/>
-			<input
-				type="password"
-				name="password"
-				placeholder="password"
-				hx-sync="closest form:abort"
-			/>
-			<input type="submit" value="login"/>
-		</form>
-	</div>
 }
