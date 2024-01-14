@@ -2,6 +2,7 @@ package webui
 
 import (
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/alexng353/ihostproxy/credentials"
@@ -83,11 +84,17 @@ func login(c *fiber.Ctx) error {
 			return c.SendString("login post err")
 		}
 
+		var secure bool = false
+		var isSecure = os.Getenv("SECURE")
+		if isSecure == "true" {
+			secure = true
+		}
+
 		c.Cookie(&fiber.Cookie{
 			Name:     "token",
 			Value:    tokenString,
 			Expires:  exp,
-			Secure:   true,
+			Secure:   secure,
 			HTTPOnly: true,
 			SameSite: "Strict",
 		})
