@@ -6,10 +6,42 @@ templ Page() {
 		<link rel="stylesheet" href="/static/index.css"/>
 		<script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
 	</head>
-	<div>
-		<h1>ihostproxy web ui</h1>
+	<h1>ihostproxy web ui</h1>
+	<div id="auth-wrapper">
+		<div
+			hx-get="/api/auth"
+			hx-trigger="load"
+		></div>
 		@Auth()
 	</div>
+	<div id="success-indicator"></div>
+	<div>
+		<h2>Add user</h2>
+		@AddUser()
+	</div>
+	<div>
+		<h2>Manage Users</h2>
+		<a href="/users">Manage Users</a>
+	</div>
+}
+
+templ AddUser() {
+	<form hx-post="/api/adduser" hx-target="#adduser-indicator">
+		<input
+			type="text"
+			name="username"
+			placeholder="username"
+			hx-sync="closest form:abort"
+		/>
+		<input
+			type="password"
+			name="password"
+			placeholder="password"
+			hx-sync="closest form:abort"
+		/>
+		<input type="submit" value="add user"/>
+	</form>
+	<div id="adduser-indicator"></div>
 }
 
 templ Auth() {
@@ -29,6 +61,5 @@ templ Auth() {
 			/>
 			<input type="submit" value="login"/>
 		</form>
-		<div id="success-indicator"></div>
 	</div>
 }

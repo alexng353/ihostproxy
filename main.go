@@ -2,9 +2,10 @@ package main
 
 import (
 	"log"
+	"log/slog"
 
+	"github.com/alexng353/ihostproxy/credentials"
 	"github.com/caarlos0/env/v10"
-	"github.com/knvi/pika"
 )
 
 type Env struct {
@@ -19,25 +20,28 @@ type Env struct {
 	WebUIPort string `env:"WEBUI_PORT" envDefault:"8080"`
 	WebUIUser string `env:"WEBUI_USER" envDefault:""`
 	WebUIPass string `env:"WEBUI_PASS" envDefault:""`
+
+	// security
+	JwtSecret string `env:"JWT_SECRET" envDefault:"secret"`
 }
 
-var prefixes = []pika.PikaPrefixDefinition{
-	{
-		Prefix:      "user",
-		Description: "User prefix",
-		Secure:      false,
-	},
-}
+var creds = credentials.Get()
 
-var P = pika.NewPika(prefixes, pika.PikaInitOptions{
-	NodeID:           622,
-	DisableLowercase: true,
-})
+var ctx = Env{}
+
+var B = "hello world"
 
 func main() {
-	ctx := Env{}
 	if err := env.Parse(&ctx); err != nil {
 		log.Fatal(err)
+	}
+
+	if ctx.WebUIPass != "" && ctx.WebUIUser != "" {
+		err := creds.AddAdmin(ctx.WebUIUser, ctx.WebUIPass)
+
+		if err != nil {
+			slog.Error("Failed to add admin", "error", err)
+		}
 	}
 
 	go startProxy(ctx)

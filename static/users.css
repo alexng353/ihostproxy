@@ -1,0 +1,19 @@
+.user-table {
+  width: 100%;
+  max-width: 640px;
+  border-collapse: collapse;
+}
+
+.user-table td,
+.user-table th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+.user-table tr {
+  text-align: center;
+}
+
+.table-wrapper {
+  padding-top: 2em;
+}
