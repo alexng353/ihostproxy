@@ -18,7 +18,7 @@ Proxy
 _NOTE: password cannot contain special symbols._
 
 ```
-docker run -it --name ihostproxy -p 1080:1080 -p 8080:8080 -v v_ihostproxy:/db -e WEBUI_USER=admin -e WEBUI_PASS="YOUR PASSWORD HERE" -e DB_PATH=/db/main.db alexng353/ihostproxy
+docker run -d --name ihostproxy -p 1080:1080 -p 8080:8080 -v v_ihostproxy:/db -e WEBUI_USER=admin -e WEBUI_PASS="YOUR PASSWORD HERE" -e DB_PATH=/db/main.db alexng353/ihostproxy
 ```
 
 ## Attributions

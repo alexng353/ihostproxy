@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  ihostproxy:
+    image: alexng353/ihostproxy
+    container_name: ihostproxy
+    ports:
+      - "1080:1080"
+      - "8080:8080"
+    volumes:
+      - v_ihostproxy:/db
+    environment:
+      - DB_PATH=/db/main.db
+
+volumes:
+  v_ihostproxy:
