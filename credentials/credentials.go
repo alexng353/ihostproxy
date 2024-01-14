@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"log/slog"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
@@ -49,6 +50,12 @@ func Get() *SQLiteCredentialStore {
 // dataBaseFile defaults to "main.db"
 func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 	var dataSource string = "main.db"
+
+	var dbpath = os.Getenv("DB_PATH")
+	if dbpath != "" {
+		dataSource = dbpath
+	}
+
 	if len(dataBaseFile) >= 1 {
 		dataSource = dataBaseFile[0]
 	}

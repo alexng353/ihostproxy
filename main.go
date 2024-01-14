@@ -23,6 +23,9 @@ type Env struct {
 
 	// security
 	JwtSecret string `env:"JWT_SECRET" envDefault:"secret"`
+
+	// database
+	DbPath string `env:"DB_PATH" envDefault:"main.db"`
 }
 
 var creds = credentials.Get()
