@@ -1,0 +1,5 @@
+FROM alpine:latest as runner
+WORKDIR /app
+COPY ./static ./static
+COPY ./ihostproxy ./ihostproxy
+ENTRYPOINT ["./ihostproxy"]
