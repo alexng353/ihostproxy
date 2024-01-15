@@ -3,18 +3,32 @@ package credentials
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/glebarez/go-sqlite"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/alexng353/ihostproxy/pika"
 )
 
+type StaticCredentials map[string]struct{}
+
+func (s StaticCredentials) Valid(user string) bool {
+	_, ok := s[user]
+	if ok {
+		return true
+	}
+
+	return false
+}
+
 type SQLiteCredentialStore struct {
 	db *sql.DB
+	// cache map[string]bool
+	cache StaticCredentials
 }
 
 type JsonCredentials struct {
@@ -60,7 +74,7 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 		dataSource = dataBaseFile[0]
 	}
 
-	db, err := sql.Open("sqlite3", dataSource)
+	db, err := sql.Open("sqlite", dataSource)
 	if err != nil {
 		slog.Error("Failed to open database", "database", dataSource, "error", err)
 		log.Fatal(err)
@@ -76,27 +90,47 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 		log.Fatal(err)
 	}
 
-	return &SQLiteCredentialStore{db: db}
+	var usernames []string
+	query = `SELECT username FROM users`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		slog.Error("Failed to get ids", "database", dataSource, "error", err)
+	}
+
+	for rows.Next() {
+		var usrnm string
+		err = rows.Scan(&usrnm)
+		if err != nil {
+			slog.Error("Failed to scan id", "database", dataSource, "error", err)
+		}
+
+		usernames = append(usernames, usrnm)
+	}
+
+	slog.Info("Loaded usernames", "usernames", usernames)
+
+	cache := make(StaticCredentials)
+
+	for _, id := range usernames {
+		cache[id] = struct{}{}
+	}
+
+	return &SQLiteCredentialStore{db: db, cache: cache}
 }
 
 // var inmemorycache = make(map[string]bool)
-type StaticCredentials map[string]bool
-
-func (s StaticCredentials) Valid(user string) bool {
-	_, ok := s[user]
-	if ok {
-		return true
-	}
-
-	return false
-}
-
-var cache = StaticCredentials{}
 
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
-	if cache.Valid(user) {
+	slog.Info("validating user", "username", user)
+	// fmt.Println("cache", store.cache)
+	slog.String("cache", fmt.Sprintf("%v", store.cache))
+
+	if store.cache.Valid(user) {
+		slog.Info("user already validated", "username", user)
 		return true
 	}
+	slog.Warn("uh oh, we are going into database logic land :(")
 	// func (store *SQLiteCredentialStore) Valid(user, password string) bool {
 
 	var hash []byte
@@ -110,7 +144,7 @@ func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 		return false
 	}
 
-	cache[user] = true
+	store.cache[user] = struct{}{}
 
 	return true
 }
@@ -229,12 +263,12 @@ func (store *SQLiteCredentialStore) GetUsers() ([]*User, error) {
 	return users, nil
 }
 
-func hashPw(password string) (hash string, err error) {
-	str_hash, hash_err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if hash_err != nil {
+func hashPw(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
 		slog.Error("Failed to hash password", "error", err)
-		return "", hash_err
+		return "", err
 	}
 
-	return string(str_hash), nil
+	return string(hash), nil
 }
