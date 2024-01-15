@@ -1,9 +1,9 @@
 package credentials
 
 import (
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -14,15 +14,11 @@ import (
 	"github.com/alexng353/ihostproxy/pika"
 )
 
-type StaticCredentials map[string]struct{}
+type StaticCredentials map[string][]byte
 
-func (s StaticCredentials) Valid(user string) bool {
-	_, ok := s[user]
-	if ok {
-		return true
-	}
-
-	return false
+func (s StaticCredentials) PlainTextValidator(user, password string) bool {
+	plaintext_password, ok := s[user]
+	return ok && subtle.ConstantTimeCompare(plaintext_password, []byte(password)) == 1
 }
 
 type SQLiteCredentialStore struct {
@@ -89,8 +85,13 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 		slog.Error("Failed to create table", "database", dataSource, "error", err)
 		log.Fatal(err)
 	}
+	type SimpleUser struct {
+		Username string
+		Password string
+	}
 
-	var usernames []string
+	// var usernames []string
+	var users []SimpleUser
 	query = `SELECT username FROM users`
 
 	rows, err := db.Query(query)
@@ -105,15 +106,16 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 			slog.Error("Failed to scan id", "database", dataSource, "error", err)
 		}
 
-		usernames = append(usernames, usrnm)
+		// usernames = append(usernames, usrnm)
+		users = append(users, SimpleUser{Username: usrnm})
 	}
 
-	slog.Info("Loaded usernames", "usernames", usernames)
+	slog.Info("Loaded usernames", "usernames", users)
 
 	cache := make(StaticCredentials)
 
-	for _, id := range usernames {
-		cache[id] = struct{}{}
+	for _, id := range users {
+		cache[id.Username] = []byte(id.Password)
 	}
 
 	return &SQLiteCredentialStore{db: db, cache: cache}
@@ -123,10 +125,8 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 	slog.Info("validating user", "username", user)
-	// fmt.Println("cache", store.cache)
-	slog.String("cache", fmt.Sprintf("%v", store.cache))
 
-	if store.cache.Valid(user) {
+	if store.cache.PlainTextValidator(user, password) {
 		slog.Info("user already validated", "username", user)
 		return true
 	}
@@ -144,7 +144,7 @@ func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 		return false
 	}
 
-	store.cache[user] = struct{}{}
+	store.cache[user] = []byte(password)
 
 	return true
 }
