@@ -1,6 +1,7 @@
 package credentials
 
 import (
+	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -29,14 +30,18 @@ func (s StaticCredentials) SadBCryptHashValidator(user, password string) bool {
 	}
 
 	return true
+}
 
-	// return ok && subtle.ConstantTimeCompare(plaintext_password, []byte(password)) == 1
+func (s StaticCredentials) PlainTextValidator(user, password string) bool {
+	plaintext_password, ok := s[user]
+	return ok && subtle.ConstantTimeCompare(plaintext_password, []byte(password)) == 1
 }
 
 type SQLiteCredentialStore struct {
 	db *sql.DB
-	// cache map[string]bool
-	cache StaticCredentials
+	// cryptCache map[string]bool
+	cryptCache StaticCredentials
+	plainCache StaticCredentials
 }
 
 type JsonCredentials struct {
@@ -125,13 +130,15 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 
 	slog.Info("Loaded usernames", "usernames", users)
 
-	cache := make(StaticCredentials)
+	cryptCache := make(StaticCredentials)
 
 	for _, id := range users {
-		cache[id.Username] = []byte(id.Password)
+		cryptCache[id.Username] = []byte(id.Password)
 	}
 
-	return &SQLiteCredentialStore{db: db, cache: cache}
+	plainCache := make(StaticCredentials)
+
+	return &SQLiteCredentialStore{db: db, cryptCache: cryptCache, plainCache: plainCache}
 }
 
 // var inmemorycache = make(map[string]bool)
@@ -139,8 +146,14 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 	slog.Info("validating user", "username", user)
 
-	if store.cache.SadBCryptHashValidator(user, password) {
+	if store.plainCache.PlainTextValidator(user, password) {
 		slog.Info("user already validated", "username", user)
+		return true
+	}
+
+	if store.cryptCache.SadBCryptHashValidator(user, password) {
+		slog.Info("user already validated", "username", user)
+		store.plainCache[user] = []byte(password)
 		return true
 	}
 	slog.Warn("uh oh, we are going into database logic land :(")
@@ -157,7 +170,7 @@ func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 		return false
 	}
 
-	store.cache[user] = []byte(password)
+	store.plainCache[user] = []byte(password)
 
 	return true
 }
