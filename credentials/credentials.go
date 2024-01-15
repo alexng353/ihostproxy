@@ -1,7 +1,6 @@
 package credentials
 
 import (
-	"crypto/subtle"
 	"database/sql"
 	"encoding/json"
 	"log"
@@ -16,9 +15,22 @@ import (
 
 type StaticCredentials map[string][]byte
 
-func (s StaticCredentials) PlainTextValidator(user, password string) bool {
-	plaintext_password, ok := s[user]
-	return ok && subtle.ConstantTimeCompare(plaintext_password, []byte(password)) == 1
+func (s StaticCredentials) SadBCryptHashValidator(user, password string) bool {
+	bcrypt_hash, ok := s[user]
+
+	if !ok {
+		return false
+	}
+
+	err := bcrypt.CompareHashAndPassword(bcrypt_hash, []byte(password))
+	if err != nil {
+		slog.Error("Failed to compare password", "username", user, "error", err)
+		return false
+	}
+
+	return true
+
+	// return ok && subtle.ConstantTimeCompare(plaintext_password, []byte(password)) == 1
 }
 
 type SQLiteCredentialStore struct {
@@ -92,7 +104,7 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 
 	// var usernames []string
 	var users []SimpleUser
-	query = `SELECT username FROM users`
+	query = `SELECT username, password FROM users`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -101,13 +113,14 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 
 	for rows.Next() {
 		var usrnm string
-		err = rows.Scan(&usrnm)
+		var pw string
+		err = rows.Scan(&usrnm, &pw)
 		if err != nil {
 			slog.Error("Failed to scan id", "database", dataSource, "error", err)
 		}
 
 		// usernames = append(usernames, usrnm)
-		users = append(users, SimpleUser{Username: usrnm})
+		users = append(users, SimpleUser{Username: usrnm, Password: pw})
 	}
 
 	slog.Info("Loaded usernames", "usernames", users)
@@ -126,7 +139,7 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 	slog.Info("validating user", "username", user)
 
-	if store.cache.PlainTextValidator(user, password) {
+	if store.cache.SadBCryptHashValidator(user, password) {
 		slog.Info("user already validated", "username", user)
 		return true
 	}
