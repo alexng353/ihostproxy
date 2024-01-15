@@ -9,8 +9,8 @@ import (
 	"github.com/alexng353/ihostproxy/context"
 	"github.com/alexng353/ihostproxy/credentials"
 	"github.com/alexng353/ihostproxy/helpers"
-	// "github.com/things-go/go-socks5"
-	"github.com/armon/go-socks5"
+	"github.com/things-go/go-socks5"
+	// "github.com/armon/go-socks5"
 )
 
 func startProxy(ctx context.Env) {
@@ -29,30 +29,35 @@ func startProxy(ctx context.Env) {
 	// 	}
 	// }
 
-	socks5conf := &socks5.Config{
-		Logger: log.New(os.Stdout, "socks5: ", log.LstdFlags),
-	}
+	// socks5conf := &socks5.Config{
+	// 	Logger: log.New(os.Stdout, "socks5: ", log.LstdFlags),
+	// }
 
 	// cator := socks5.UserPassAuthenticator{Credentials: c}
 
+	// cator := socks5.UserPassAuthenticator{
+	// 	Credentials: socks5.StaticCredentials{
+	// 		ctx.ProxyUser: ctx.ProxyPassword,
+	// 	},
+	// }
+
+	// socks5conf.AuthMethods = []socks5.Authenticator{cator}
+
+	// server, err := socks5.New(socks5conf)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+
+	// cator := socks5.UserPassAuthenticator{Credentials: c}
 	cator := socks5.UserPassAuthenticator{
 		Credentials: socks5.StaticCredentials{
 			ctx.ProxyUser: ctx.ProxyPassword,
 		},
 	}
-
-	socks5conf.AuthMethods = []socks5.Authenticator{cator}
-
-	server, err := socks5.New(socks5conf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// cator := socks5.UserPassAuthenticator{Credentials: c}
-	// server := socks5.NewServer(
-	// 	socks5.WithLogger(socks5.NewLogger(log.New(os.Stdout, "socks5: ", log.LstdFlags))),
-	// 	socks5.WithAuthMethods([]socks5.Authenticator{cator}),
-	// )
+	server := socks5.NewServer(
+		socks5.WithLogger(socks5.NewLogger(log.New(os.Stdout, "socks5: ", log.LstdFlags))),
+		socks5.WithAuthMethods([]socks5.Authenticator{cator}),
+	)
 
 	port := strconv.FormatInt(int64(helpers.ValidatePort(ctx.ProxyPort)), 10)
 
