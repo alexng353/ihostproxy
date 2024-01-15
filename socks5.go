@@ -13,8 +13,9 @@ import (
 	// "github.com/armon/go-socks5"
 )
 
+var c = credentials.Get()
+
 func startProxy(ctx context.Env) {
-	var c = credentials.Get()
 	if ctx.Creds != "" {
 		err := c.Load(ctx.Creds)
 		if err != nil {
@@ -48,12 +49,12 @@ func startProxy(ctx context.Env) {
 	// 	log.Fatal(err)
 	// }
 
-	// cator := socks5.UserPassAuthenticator{Credentials: c}
-	cator := socks5.UserPassAuthenticator{
-		Credentials: socks5.StaticCredentials{
-			ctx.ProxyUser: ctx.ProxyPassword,
-		},
-	}
+	cator := socks5.UserPassAuthenticator{Credentials: c}
+	// cator := socks5.UserPassAuthenticator{
+	// 	Credentials: socks5.StaticCredentials{
+	// 		ctx.ProxyUser: ctx.ProxyPassword,
+	// 	},
+	// }
 	server := socks5.NewServer(
 		socks5.WithLogger(socks5.NewLogger(log.New(os.Stdout, "socks5: ", log.LstdFlags))),
 		socks5.WithAuthMethods([]socks5.Authenticator{cator}),
