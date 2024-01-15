@@ -22,18 +22,24 @@ func startProxy(ctx context.Env) {
 		}
 	}
 
-	if ctx.ProxyUser != "" && ctx.ProxyPassword != "" {
-		err := c.AddEntry(ctx.ProxyUser, ctx.ProxyPassword)
-		if err != nil {
-			slog.Error("Failed to add entry", "error", err)
-		}
-	}
+	// if ctx.ProxyUser != "" && ctx.ProxyPassword != "" {
+	// 	err := c.AddEntry(ctx.ProxyUser, ctx.ProxyPassword)
+	// 	if err != nil {
+	// 		slog.Error("Failed to add entry", "error", err)
+	// 	}
+	// }
 
 	socks5conf := &socks5.Config{
 		Logger: log.New(os.Stdout, "socks5: ", log.LstdFlags),
 	}
 
-	cator := socks5.UserPassAuthenticator{Credentials: c}
+	// cator := socks5.UserPassAuthenticator{Credentials: c}
+
+	cator := socks5.UserPassAuthenticator{
+		Credentials: socks5.StaticCredentials{
+			ctx.ProxyUser: ctx.ProxyPassword,
+		},
+	}
 
 	socks5conf.AuthMethods = []socks5.Authenticator{cator}
 
