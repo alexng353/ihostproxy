@@ -79,13 +79,25 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 	return &SQLiteCredentialStore{db: db}
 }
 
-var inmemorycache = make(map[string]bool)
+// var inmemorycache = make(map[string]bool)
+type StaticCredentials map[string]bool
 
-// func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
-func (store *SQLiteCredentialStore) Valid(user, password string) bool {
-	if inmemorycache[user] {
+func (s StaticCredentials) Valid(user string) bool {
+	_, ok := s[user]
+	if ok {
 		return true
 	}
+
+	return false
+}
+
+var cache = StaticCredentials{}
+
+func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
+	if cache.Valid(user) {
+		return true
+	}
+	// func (store *SQLiteCredentialStore) Valid(user, password string) bool {
 
 	var hash []byte
 	query := "SELECT id, password FROM users WHERE username=?"
@@ -98,7 +110,7 @@ func (store *SQLiteCredentialStore) Valid(user, password string) bool {
 		return false
 	}
 
-	inmemorycache[user] = true
+	cache[user] = true
 
 	return true
 }
