@@ -81,7 +81,8 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 
 var inmemorycache = make(map[string]bool)
 
-func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
+// func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
+func (store *SQLiteCredentialStore) Valid(user, password string) bool {
 	if inmemorycache[user] {
 		return true
 	}
