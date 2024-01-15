@@ -30,8 +30,15 @@ func main() {
 		}
 	}
 
-	go startProxy(ctx)
-	go webui.StartWebUI(ctx)
+	disableProxy := os.Getenv("DISABLE_PROXY") == "1"
+	if !disableProxy {
+		go startProxy(ctx)
+	}
+
+	disableWebui := os.Getenv("DISABLE_WEBUI") == "1"
+	if !disableWebui {
+		go webui.StartWebUI(ctx)
+	}
 
 	sigs := make(chan os.Signal, 1)
 
