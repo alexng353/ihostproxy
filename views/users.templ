@@ -50,11 +50,9 @@ templ User(username string, id string, isadmin bool) {
 				hx-post={ fmt.Sprintf("/api/deleteuser?id=%s", id) }
 				hx-target="#response-target"
 				hx-confirm={ fmt.Sprintf("Are you sure you want to delete %s?", username) }
-			>
-				Delete
-			</button>
+			>Delete</button>
 			<button
-				onclick="alert('Not implemented yet')"
+				onclick="alert"
 			>
 				Change Password
 			</button>

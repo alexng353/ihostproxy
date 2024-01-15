@@ -79,7 +79,13 @@ func NewSQLiteCredentialStore(dataBaseFile ...string) *SQLiteCredentialStore {
 	return &SQLiteCredentialStore{db: db}
 }
 
+var inmemorycache = make(map[string]bool)
+
 func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
+	if inmemorycache[user] {
+		return true
+	}
+
 	var hash []byte
 	query := "SELECT id, password FROM users WHERE username=?"
 	err := store.db.QueryRow(query, user).Scan(&user, &hash)
@@ -90,6 +96,8 @@ func (store *SQLiteCredentialStore) Valid(user, password, _ string) bool {
 		slog.Error("Failed to compare password", "username", user, "error", err)
 		return false
 	}
+
+	inmemorycache[user] = true
 
 	return true
 }
