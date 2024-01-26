@@ -5,11 +5,11 @@
 ## Todo
 
 Web UI
-[ ] Change password
+- [ ] Change password
 
 Proxy
-[ ] FQDN
-[ ] IP Whitelist
+- [ ] FQDN
+- [ ] IP Whitelist
 
 ## Running
 
